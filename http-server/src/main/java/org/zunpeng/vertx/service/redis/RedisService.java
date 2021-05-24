@@ -9,6 +9,8 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.mutiny.redis.client.Redis;
 
+import java.util.List;
+
 @ProxyGen
 @VertxGen
 public interface RedisService {
@@ -25,6 +27,9 @@ public interface RedisService {
 
   @Fluent
   RedisService get(String key, Handler<AsyncResult<String>> handler);
+
+  @Fluent
+  RedisService list(String key, Handler<AsyncResult<List<String>>> handler);
 
   @Fluent
   RedisService testUser(User other, Handler<AsyncResult<User>> handler);

@@ -10,8 +10,10 @@ import io.vertx.mutiny.redis.client.RedisAPI;
 import io.vertx.redis.client.ResponseType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.zunpeng.vertx.core.Subscriber;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 public class RedisServiceImpl implements RedisService {
 
@@ -44,6 +46,29 @@ public class RedisServiceImpl implements RedisService {
         return Uni.createFrom().failure(new RuntimeException("error"));
       })
       .subscribe().withSubscriber(UniHelper.toSubscriber(handler));
+    return this;
+  }
+
+  @Override
+  public RedisService list(String key, Handler<AsyncResult<List<String>>> handler) {
+    this.redisApi.lrange(key, "0", "-1")
+      .onItem()
+      .transformToMulti(response -> {
+        logger.info("redis response type: {}, attr: {}", response.type(), response.attributes());
+        return response.toMulti();
+      })
+      .onItem()
+      .transform(response -> {
+        logger.info("redis response type: {}, attr: {}", response.type(), response.attributes());
+        return response.toString();
+      })
+      .onFailure()
+      .call((a) -> {
+        logger.error(a.getMessage(), a);
+        throw new RuntimeException(a);
+      })
+      .subscribe()
+      .withSubscriber(new Subscriber<>(handler));
     return this;
   }
 

@@ -22,6 +22,10 @@ import org.zunpeng.vertx.service.redis.RedisVerticle;
 import org.zunpeng.vertx.service.redis.User;
 import org.zunpeng.vertx.service.redis.mutiny.RedisService;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
+import java.util.Collections;
+
 public class HttpServerVerticle extends AbstractVerticle {
 
   private static final Logger logger = LogManager.getLogger(HttpServerVerticle.class);
@@ -56,6 +60,20 @@ public class HttpServerVerticle extends AbstractVerticle {
         .subscribe()
         .with(
           routingContext::endAndForget,
+          t -> {
+            logger.error(t.getMessage(), t);
+            routingContext.fail(t);
+          });
+    });
+
+    router.get("/redis/list").handler(routingContext -> {
+      redisService.list("hello-list")
+        .subscribe()
+        .with(
+          r -> {
+            logger.info("r: {}", r.size());
+            routingContext.endAndForget(r.toString());
+          },
           t -> {
             logger.error(t.getMessage(), t);
             routingContext.fail(t);

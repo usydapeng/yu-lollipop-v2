@@ -284,6 +284,7 @@ public class TestMutiny {
       .subscribe().with(logger::info);
   }
 
+  // 失败重试
   @Test
   public void demo14() throws Exception {
     Uni.createFrom().emitter(em -> {
