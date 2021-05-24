@@ -59,11 +59,6 @@ dependencies {
   implementation("org.apache.logging.log4j:log4j-core:$log4jVersion")
   implementation("org.apache.logging.log4j:log4j-api:$log4jVersion")
 
-  // querydsl
-  implementation("com.querydsl:querydsl-jdo:$queryDslVersion")
-  annotationProcessor("com.querydsl:querydsl-apt:$queryDslVersion")
-  compileOnly("com.querydsl:querydsl-apt:$queryDslVersion")
-
   testImplementation("io.vertx:vertx-junit5")
   testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
 }
@@ -106,30 +101,14 @@ tasks.register<JavaCompile>("annotationProcessing") {
   )
 }
 
-tasks.register<JavaCompile>("generateQueryDSL") {
-  group = "other"
-  description = "Generates the QueryDSL query types"
-  source = sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).java
-  destinationDir = project.file("${project.buildDir}/genquerydsl/main/java")
-  classpath = configurations.compileClasspath.get()
-  options.annotationProcessorPath = configurations.compileClasspath.get()
-  options.compilerArgs = listOf(
-    "-proc:only",
-    "-processor", "com.querydsl.apt.jdo.JDOAnnotationProcessor",
-    "-Acodegen.output=${project.projectDir}/src/main"
-  )
-  options.isWarnings = true
-}
-
 tasks.compileJava {
   dependsOn(tasks.named("annotationProcessing"))
-  dependsOn(tasks.named("generateQueryDSL"))
 }
 
 sourceSets {
   main {
     java {
-      srcDirs(project.file("${project.buildDir}/generated/main/java"), project.file("${project.buildDir}/genquerydsl/main/java"))
+      srcDirs(project.file("${project.buildDir}/generated/main/java"))
     }
   }
 }
