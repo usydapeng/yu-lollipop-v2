@@ -1,8 +1,7 @@
-package org.zunpeng.vertx;
+package org.zunpeng.vertx.service.http;
 
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.vertx.core.AbstractVerticle;
-import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.validation.ParameterProcessorException;
@@ -18,13 +17,9 @@ import io.vertx.mutiny.json.schema.SchemaParser;
 import io.vertx.mutiny.json.schema.SchemaRouter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.zunpeng.vertx.service.redis.RedisVerticle;
+import org.zunpeng.vertx.core.ServerConstant;
 import org.zunpeng.vertx.service.redis.User;
 import org.zunpeng.vertx.service.redis.mutiny.RedisService;
-
-import java.lang.reflect.Array;
-import java.util.Arrays;
-import java.util.Collections;
 
 public class HttpServerVerticle extends AbstractVerticle {
 
@@ -32,7 +27,9 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   @Override
   public void start(Promise<Void> promise) {
-    RedisService redisService = org.zunpeng.vertx.service.redis.RedisService.createProxy(vertx.getDelegate(), "redis_addr");
+    logger.info("config of httpServerVerticle: {}", config().encode());
+
+    RedisService redisService = org.zunpeng.vertx.service.redis.RedisService.createProxy(vertx.getDelegate(), ServerConstant.EVENT_BUS_REDIS_ADDR);
 
     Router router = Router.router(vertx);
     router.route().handler(BodyHandler.create());
@@ -57,6 +54,9 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     router.get("/redis").handler(routingContext -> {
       redisService.get("hello")
+        .onItem()
+        .ifNull()
+        .continueWith("value is null")
         .subscribe()
         .with(
           routingContext::endAndForget,
@@ -123,12 +123,8 @@ public class HttpServerVerticle extends AbstractVerticle {
       routingContext.response().setStatusCode(400).endAndForget("400, 400, 400");
     });
 
-    vertx.deployVerticle(RedisVerticle.class.getName(), new DeploymentOptions().setInstances(1))
-      .onItem()
-      .transformToUni(deploymentId -> {
-        logger.info("======== deployId: {}", deploymentId);
-        return vertx.createHttpServer().requestHandler(router).listen(8888);
-      }).subscribe()
+    vertx.createHttpServer().requestHandler(router).listen(8888)
+      .subscribe()
       .with(
         http -> {
           logger.info("======== port: {}", http.actualPort());

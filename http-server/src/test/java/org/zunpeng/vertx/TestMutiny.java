@@ -1540,6 +1540,20 @@ public class TestMutiny {
     logger.info("name: {}, location: {}, time: {}", name, address, localDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
   }
 
+  @Test
+  public void demo39(Vertx vertx, VertxTestContext testContext) throws Exception {
+    logger.info("-----");
+    logger.info("hello: {}", () -> {
+      logger.info("inner -----");
+      String a = Uni.createFrom().item("hello").emitOn(executor).onItem().delayIt().by(Duration.ofSeconds(2)).await().indefinitely();
+      logger.info("inner result -----");
+      return a;
+    });
+    logger.info("----- end");
+    Thread.sleep(5000);
+    testContext.completeNow();
+  }
+
   private class RandomDrop<T> extends AbstractMultiOperator<T, T> {
     public RandomDrop(Multi<? extends T> upstream) {
       super(upstream);

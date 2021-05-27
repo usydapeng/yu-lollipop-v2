@@ -10,15 +10,15 @@ import org.reactivestreams.Subscription;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Subscriber<T> implements org.reactivestreams.Subscriber<T> {
+public class ListSubscriber<T> implements org.reactivestreams.Subscriber<T> {
 
-  private static final Logger logger = LogManager.getLogger(Subscriber.class);
+  private static final Logger logger = LogManager.getLogger(ListSubscriber.class);
 
   private final List<T> List = new ArrayList<>();
   private final Handler<AsyncResult<List<T>>> handler;
   private Subscription subscription;
 
-  public Subscriber(Handler<AsyncResult<List<T>>> handler) {
+  public ListSubscriber(Handler<AsyncResult<List<T>>> handler) {
     this.handler = handler;
   }
 

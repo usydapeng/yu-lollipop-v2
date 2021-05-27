@@ -25,6 +25,7 @@ public interface RedisService {
     return new org.zunpeng.vertx.service.redis.mutiny.RedisService(new RedisServiceVertxEBProxy(vertx, address));
   }
 
+  // handler中可以接收空值null
   @Fluent
   RedisService get(String key, Handler<AsyncResult<String>> handler);
 

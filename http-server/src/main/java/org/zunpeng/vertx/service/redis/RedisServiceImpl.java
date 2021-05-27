@@ -10,7 +10,7 @@ import io.vertx.mutiny.redis.client.RedisAPI;
 import io.vertx.redis.client.ResponseType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.zunpeng.vertx.core.Subscriber;
+import org.zunpeng.vertx.core.ListSubscriber;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -25,7 +25,6 @@ public class RedisServiceImpl implements RedisService {
     redis.connect()
       .subscribe()
       .with(rd -> {
-        logger.info("redis: {}", rd);
         this.redisApi = RedisAPI.api(rd);
         handler.handle(Future.succeededFuture(this));
       }, t -> {
@@ -37,15 +36,20 @@ public class RedisServiceImpl implements RedisService {
   @Override
   public RedisService get(String key, Handler<AsyncResult<String>> handler) {
     this.redisApi.get(key)
-      .onItem()
-      .transformToUni(response -> {
-        logger.info("redis response type: {}, attr: {}, body: {}", response.type(), response.attributes(), response.toString(StandardCharsets.UTF_8));
-        if (response.type() == ResponseType.BULK) {
-          return Uni.createFrom().item(response.toString());
+      .subscribe()
+      .with(response -> {
+        if (response == null) {
+          handler.handle(Future.succeededFuture(null));
+        } else {
+          logger.info("redis response type: {}, attr: {}, body: {}", response.type(), response.attributes(), response.toString(StandardCharsets.UTF_8));
+          if (response.type() == ResponseType.BULK) {
+            handler.handle(Future.succeededFuture(response.toString()));
+          }
         }
-        return Uni.createFrom().failure(new RuntimeException("error"));
-      })
-      .subscribe().withSubscriber(UniHelper.toSubscriber(handler));
+      }, throwable -> {
+        logger.error(throwable.getMessage(), throwable);
+        handler.handle(Future.failedFuture(throwable));
+      });
     return this;
   }
 
@@ -68,7 +72,7 @@ public class RedisServiceImpl implements RedisService {
         throw new RuntimeException(a);
       })
       .subscribe()
-      .withSubscriber(new Subscriber<>(handler));
+      .withSubscriber(new ListSubscriber<>(handler));
     return this;
   }
 

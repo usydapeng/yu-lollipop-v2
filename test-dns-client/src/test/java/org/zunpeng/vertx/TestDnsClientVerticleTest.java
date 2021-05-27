@@ -135,4 +135,13 @@ class TestDnsClientVerticleTest {
     InetAddress[] inetAddresses = InetAddress.getAllByName("210.73.212.120");
     System.out.println(Arrays.asList(inetAddresses));
   }
+
+  @Test
+  public void demo5(Vertx vertx, VertxTestContext testContext) throws Exception {
+    logger.info("timer start");
+    vertx.setTimer(1000, timerId -> {
+      logger.info("timeId: {}", timerId);
+      testContext.completeNow();
+    });
+  }
 }

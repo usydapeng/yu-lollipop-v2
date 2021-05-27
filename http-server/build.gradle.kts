@@ -26,7 +26,7 @@ val junitJupiterVersion = "5.7.0"
 val log4jVersion = "2.14.1"
 val queryDslVersion = "4.4.0"
 
-val mainVerticleName = "org.zunpeng.vertx.HttpServerVerticle"
+val mainVerticleName = "org.zunpeng.vertx.MainVerticle"
 val launcherClassName = "io.vertx.core.Launcher"
 
 val watchForChange = "src/**/*"
@@ -44,6 +44,8 @@ dependencies {
   implementation("io.vertx:vertx-redis-client")
   implementation("io.vertx:vertx-web-validation")
   implementation("io.vertx:vertx-json-schema")
+  implementation("io.vertx:vertx-config")
+  implementation("io.vertx:vertx-config-hocon")
 
   compileOnly("io.vertx:vertx-codegen")
   annotationProcessor("io.vertx:vertx-codegen:$vertxVersion")
@@ -55,9 +57,11 @@ dependencies {
   implementation("io.smallrye.reactive:smallrye-mutiny-vertx-redis-client:$mutinyVertxVersion")
   implementation("io.smallrye.reactive:smallrye-mutiny-vertx-web-validation:$mutinyVertxVersion")
   implementation("io.smallrye.reactive:smallrye-mutiny-vertx-json-schema:$mutinyVertxVersion")
+  implementation("io.smallrye.reactive:smallrye-mutiny-vertx-config:$mutinyVertxVersion")
 
   implementation("org.apache.logging.log4j:log4j-core:$log4jVersion")
   implementation("org.apache.logging.log4j:log4j-api:$log4jVersion")
+  implementation("com.lmax:disruptor:3.4.4")
 
   testImplementation("io.vertx:vertx-junit5")
   testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
