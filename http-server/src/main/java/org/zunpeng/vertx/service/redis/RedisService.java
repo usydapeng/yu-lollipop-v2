@@ -6,7 +6,7 @@ import io.vertx.codegen.annotations.ProxyGen;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
+import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.redis.client.Redis;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public interface RedisService {
 
   @GenIgnore
   static org.zunpeng.vertx.service.redis.mutiny.RedisService createProxy(Vertx vertx, String address) {
-    return new org.zunpeng.vertx.service.redis.mutiny.RedisService(new RedisServiceVertxEBProxy(vertx, address));
+    return new org.zunpeng.vertx.service.redis.mutiny.RedisService(new RedisServiceVertxEBProxy(vertx.getDelegate(), address));
   }
 
   // handler中可以接收空值null

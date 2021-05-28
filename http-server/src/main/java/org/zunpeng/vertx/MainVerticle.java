@@ -11,6 +11,7 @@ import io.vertx.mutiny.config.ConfigRetriever;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zunpeng.vertx.service.http.HttpServerVerticle;
+import org.zunpeng.vertx.service.mysql.MysqlVerticle;
 import org.zunpeng.vertx.service.redis.RedisVerticle;
 
 public class MainVerticle extends AbstractVerticle {
@@ -37,6 +38,12 @@ public class MainVerticle extends AbstractVerticle {
           .onItem()
           .transformToUni(deploymentId -> {
             logger.info("redis deployment id: {}", deploymentId);
+            return vertx.deployVerticle(MysqlVerticle.class.getName(),
+              new DeploymentOptions().setInstances(1).setConfig(configJsonObject.getJsonObject("mysql")));
+          })
+          .onItem()
+          .transformToUni(deploymentId -> {
+            logger.info("mysql deployment id: {}", deploymentId);
             return vertx.deployVerticle(HttpServerVerticle.class.getName(),
               new DeploymentOptions().setInstances(1).setConfig(configJsonObject.getJsonObject("http-server")));
           })

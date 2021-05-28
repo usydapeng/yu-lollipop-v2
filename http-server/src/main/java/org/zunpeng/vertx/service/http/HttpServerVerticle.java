@@ -18,6 +18,7 @@ import io.vertx.mutiny.json.schema.SchemaRouter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zunpeng.vertx.core.ServerConstant;
+import org.zunpeng.vertx.service.mysql.mutiny.MysqlService;
 import org.zunpeng.vertx.service.redis.User;
 import org.zunpeng.vertx.service.redis.mutiny.RedisService;
 
@@ -29,7 +30,8 @@ public class HttpServerVerticle extends AbstractVerticle {
   public void start(Promise<Void> promise) {
     logger.info("config of httpServerVerticle: {}", config().encode());
 
-    RedisService redisService = org.zunpeng.vertx.service.redis.RedisService.createProxy(vertx.getDelegate(), ServerConstant.EVENT_BUS_REDIS_ADDR);
+    RedisService redisService = org.zunpeng.vertx.service.redis.RedisService.createProxy(vertx, ServerConstant.EVENT_BUS_REDIS_ADDR);
+    MysqlService mysqlService = org.zunpeng.vertx.service.mysql.MysqlService.createProxy(vertx, ServerConstant.EVENT_BUS_MYSQL_ADDR);
 
     Router router = Router.router(vertx);
     router.route().handler(BodyHandler.create());
@@ -91,6 +93,22 @@ public class HttpServerVerticle extends AbstractVerticle {
             logger.error(t.getMessage(), t);
             routingContext.fail(t);
           });
+    });
+
+    router.get("/device/:deviceId").handler(routingContext -> {
+      Long deviceId = Long.valueOf(routingContext.pathParam("deviceId"));
+      mysqlService.getDeviceById(deviceId)
+        .subscribe()
+        .with(device -> {
+          if (device == null) {
+            routingContext.endAndForget("device doesn't exists");
+          } else {
+            routingContext.endAndForget(device.toJson().encode());
+          }
+        }, throwable -> {
+          logger.error(throwable.getMessage(), throwable);
+          routingContext.fail(throwable);
+        });
     });
 
     router.route("/*").handler(routingContext -> {

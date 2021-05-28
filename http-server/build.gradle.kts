@@ -39,6 +39,7 @@ application {
 dependencies {
   implementation(platform("io.vertx:vertx-stack-depchain:$vertxVersion"))
   implementation("io.vertx:vertx-service-proxy")
+  implementation("io.vertx:vertx-mysql-client")
   implementation("io.vertx:vertx-sql-client-templates")
   implementation("io.vertx:vertx-web")
   implementation("io.vertx:vertx-redis-client")
@@ -51,7 +52,11 @@ dependencies {
   annotationProcessor("io.vertx:vertx-codegen:$vertxVersion")
   implementation("io.vertx:vertx-service-proxy")
 
+  runtimeOnly("mysql:mysql-connector-java:6.0.6")
+  implementation("com.fasterxml.jackson.core:jackson-databind:2.12.3")
+
   implementation("io.smallrye.reactive:smallrye-mutiny-vertx-core:$mutinyVertxVersion")
+  implementation("io.smallrye.reactive:smallrye-mutiny-vertx-mysql-client:$mutinyVertxVersion")
   implementation("io.smallrye.reactive:smallrye-mutiny-vertx-sql-client-templates:$mutinyVertxVersion")
   implementation("io.smallrye.reactive:smallrye-mutiny-vertx-web:$mutinyVertxVersion")
   implementation("io.smallrye.reactive:smallrye-mutiny-vertx-redis-client:$mutinyVertxVersion")
