@@ -3,6 +3,7 @@ package org.zunpeng.vertx.service.http;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.validation.ParameterProcessorException;
 import io.vertx.ext.web.validation.RequestParameters;
@@ -21,6 +22,8 @@ import org.zunpeng.vertx.core.ServerConstant;
 import org.zunpeng.vertx.service.mysql.mutiny.MysqlService;
 import org.zunpeng.vertx.service.redis.User;
 import org.zunpeng.vertx.service.redis.mutiny.RedisService;
+
+import java.time.LocalDateTime;
 
 public class HttpServerVerticle extends AbstractVerticle {
 
@@ -93,6 +96,54 @@ public class HttpServerVerticle extends AbstractVerticle {
             logger.error(t.getMessage(), t);
             routingContext.fail(t);
           });
+    });
+
+    router.get("/device").handler(routingContext -> {
+      mysqlService.listDevice()
+        .subscribe()
+        .with(deviceList -> {
+          logger.info("size of device: {}", deviceList.size());
+          JsonArray jsonArray = new JsonArray();
+          deviceList.forEach(device -> jsonArray.add(device.toJson()));
+          routingContext.endAndForget(jsonArray.encode());
+        }, throwable -> {
+          logger.error(throwable.getMessage(), throwable);
+          routingContext.fail(throwable);
+        });
+    });
+
+    router.get("/device/add").handler(routingContext -> {
+      mysqlService.saveDevice(LocalDateTime.now().toString())
+        .subscribe()
+        .with(device -> {
+          logger.info("device: {}", device.toJson().encode());
+          routingContext.endAndForget(device.toJson().encode());
+        }, throwable -> {
+          logger.error(throwable.getMessage(), throwable);
+          routingContext.fail(throwable);
+        });
+    });
+
+    router.get("/device/update").handler(routingContext -> {
+      mysqlService.updateDevice(1L, "lzhangsan")
+        .subscribe()
+        .with(r -> {
+          routingContext.endAndForget("success");
+        }, throwable -> {
+          logger.error(throwable.getMessage(), throwable);
+          routingContext.fail(throwable);
+        });
+    });
+
+    router.get("/device/update-tx").handler(routingContext -> {
+      mysqlService.txUpdateDevice(1L, "sdsdsd")
+        .subscribe()
+        .with(r -> {
+          routingContext.endAndForget("success");
+        }, throwable -> {
+          logger.error(throwable.getMessage(), throwable);
+          routingContext.fail(throwable);
+        });
     });
 
     router.get("/device/:deviceId").handler(routingContext -> {

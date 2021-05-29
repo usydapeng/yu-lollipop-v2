@@ -4,6 +4,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
+import io.vertx.mutiny.mysqlclient.MySQLClient;
 import io.vertx.mutiny.sqlclient.Pool;
 import io.vertx.mutiny.sqlclient.templates.RowMapper;
 import io.vertx.mutiny.sqlclient.templates.SqlTemplate;
@@ -12,9 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zunpeng.vertx.service.mysql.domain.Device;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class MysqlServiceImpl implements MysqlService {
 
@@ -60,6 +59,89 @@ public class MysqlServiceImpl implements MysqlService {
       }, throwable -> {
         logger.error(throwable.getMessage(), throwable);
         handler.handle(Future.failedFuture(throwable));
+      });
+    return this;
+  }
+
+  @Override
+  public MysqlService listDevice(Handler<AsyncResult<List<Device>>> handler) {
+    String sql = "select * from device";
+    SqlTemplate.forQuery(pool, sql)
+      .mapTo(Device.class)
+      .execute(new HashMap<>())
+      .subscribe()
+      .with(rowSet -> {
+        List<Device> deviceList = new ArrayList<>();
+        for (Device device : rowSet) {
+          deviceList.add(device);
+        }
+        handler.handle(Future.succeededFuture(deviceList));
+      }, throwable -> {
+        logger.error(throwable.getMessage(), throwable);
+        handler.handle(Future.failedFuture(throwable));
+      });
+    return this;
+  }
+
+  @Override
+  public MysqlService saveDevice(String sn, Handler<AsyncResult<Device>> handler) {
+    String sql = "insert into device(sn) values (#{sn})";
+    SqlTemplate.forUpdate(pool, sql)
+      .execute(Collections.singletonMap("sn", sn))
+      .subscribe()
+      .with(rowSet -> {
+        long lastInsertId = rowSet.property(MySQLClient.LAST_INSERTED_ID);
+        logger.info("lastInsertId: {}, {} row(s) updated!", lastInsertId, rowSet.rowCount());
+        handler.handle(Future.succeededFuture(new Device(lastInsertId, sn)));
+      }, throwable -> {
+        logger.error(throwable.getMessage(), throwable);
+        handler.handle(Future.failedFuture(throwable));
+      });
+    return this;
+  }
+
+  @Override
+  public MysqlService updateDevice(Long id, String sn, Handler<AsyncResult<Void>> handler) {
+    String sql = "update device set sn = #{sn} where id = #{id}";
+    Map<String, Object> paramMap = new HashMap<>();
+    paramMap.put("id", id);
+    paramMap.put("sn", sn);
+    SqlTemplate.forUpdate(pool, sql)
+      .execute(paramMap)
+      .subscribe()
+      .with(rowSet -> {
+        logger.info("{} row(s) updated!", rowSet.rowCount());
+        handler.handle(Future.succeededFuture());
+      }, throwable -> {
+        logger.error(throwable.getMessage(), throwable);
+        handler.handle(Future.failedFuture(throwable));
+      });
+    return this;
+  }
+
+  @Override
+  public MysqlService txUpdateDevice(Long id, String sn, Handler<AsyncResult<Void>> handler) {
+    String sql = "update device set sn = #{sn} where id = #{id}";
+    Map<String, Object> paramMap = new HashMap<>();
+    paramMap.put("id", id);
+    paramMap.put("sn", sn);
+    pool.withTransaction(conn ->
+      SqlTemplate.forUpdate(conn, sql)
+        .execute(paramMap)
+        // 模拟失败，触发回滚
+        // .onItem()
+        // .failWith(a -> {
+        //   logger.info("{} row(s) updated!", a.rowCount());
+        //   return new RuntimeException("error");
+        // })
+    )
+      .subscribe()
+      .with(a -> {
+        logger.info("{} row(s) updated!", a.rowCount());
+        handler.handle(Future.succeededFuture());
+      }, t -> {
+        logger.error(t.getMessage(), t);
+        handler.handle(Future.failedFuture(t));
       });
     return this;
   }

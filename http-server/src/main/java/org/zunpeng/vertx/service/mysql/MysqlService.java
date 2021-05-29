@@ -10,6 +10,8 @@ import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.sqlclient.Pool;
 import org.zunpeng.vertx.service.mysql.domain.Device;
 
+import java.util.List;
+
 @ProxyGen
 @VertxGen
 public interface MysqlService {
@@ -26,4 +28,16 @@ public interface MysqlService {
 
   @Fluent
   MysqlService getDeviceById(Long id, Handler<AsyncResult<Device>> handler);
+
+  @Fluent
+  MysqlService listDevice(Handler<AsyncResult<List<Device>>> handler);
+
+  @Fluent
+  MysqlService saveDevice(String sn, Handler<AsyncResult<Device>> handler);
+
+  @Fluent
+  MysqlService updateDevice(Long id, String sn, Handler<AsyncResult<Void>> handler);
+
+  @Fluent
+  MysqlService txUpdateDevice(Long id, String sn, Handler<AsyncResult<Void>> handler);
 }
