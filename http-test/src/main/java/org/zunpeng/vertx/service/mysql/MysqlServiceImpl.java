@@ -3,15 +3,14 @@ package org.zunpeng.vertx.service.mysql;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.json.JsonObject;
-import io.vertx.mutiny.mysqlclient.MySQLClient;
-import io.vertx.mutiny.sqlclient.Pool;
-import io.vertx.mutiny.sqlclient.templates.RowMapper;
-import io.vertx.mutiny.sqlclient.templates.SqlTemplate;
+import io.vertx.mysqlclient.MySQLClient;
+import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.templates.SqlTemplate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zunpeng.vertx.service.mysql.domain.Device;
+import org.zunpeng.vertx.service.mysql.domain.DeviceRowMapper;
 
 import java.util.*;
 
@@ -24,18 +23,16 @@ public class MysqlServiceImpl implements MysqlService {
   public MysqlServiceImpl(Pool pool, Handler<AsyncResult<MysqlService>> handler) {
     this.pool = pool;
     SqlTemplate.forQuery(pool, "select 1")
-      .mapTo(new RowMapper<JsonObject>(Row::toJson))
+      .mapTo(Row::toJson)
       .execute(new HashMap<>())
-      .subscribe()
-      .with(rowSet -> {
+      .onSuccess(rowSet -> {
         logger.info("------- result of test: {}", rowSet.iterator().next());
         handler.handle(Future.succeededFuture(this));
-      }, throwable -> {
+      })
+      .onFailure(throwable -> {
         logger.error(throwable.getMessage(), throwable);
         handler.handle(Future.failedFuture(throwable));
       });
-
-
   }
 
   @Override
@@ -43,10 +40,10 @@ public class MysqlServiceImpl implements MysqlService {
     String sql = "select * from device where id = #{id}";
     Map<String, Object> parameterMap = Collections.singletonMap("id", id);
     SqlTemplate.forQuery(pool, sql)
-      .mapTo(Device.class)
+      // TODO DeviceRowMapper.INSTANCE 不能是Device.class
+      .mapTo(DeviceRowMapper.INSTANCE)
       .execute(parameterMap)
-      .subscribe()
-      .with(rowSet -> {
+      .onSuccess(rowSet -> {
         if (rowSet.size() == 0) {
           handler.handle(Future.succeededFuture(null));
           return;
@@ -56,7 +53,9 @@ public class MysqlServiceImpl implements MysqlService {
           return;
         }
         handler.handle(Future.succeededFuture(rowSet.iterator().next()));
-      }, throwable -> {
+      })
+      .onFailure(throwable -> {
+        logger.error("exception: {}", throwable.getClass().getName());
         logger.error(throwable.getMessage(), throwable);
         handler.handle(Future.failedFuture(throwable));
       });
@@ -67,16 +66,16 @@ public class MysqlServiceImpl implements MysqlService {
   public MysqlService listDevice(Handler<AsyncResult<List<Device>>> handler) {
     String sql = "select * from device";
     SqlTemplate.forQuery(pool, sql)
-      .mapTo(Device.class)
+      .mapTo(DeviceRowMapper.INSTANCE)
       .execute(new HashMap<>())
-      .subscribe()
-      .with(rowSet -> {
-        List<Device> deviceList = new ArrayList<>();
-        for (Device device : rowSet) {
-          deviceList.add(device);
+      .onSuccess(rowSet -> {
+        List<Device> mobileDeviceList = new ArrayList<>();
+        for (Device mobileDevice : rowSet) {
+          mobileDeviceList.add(mobileDevice);
         }
-        handler.handle(Future.succeededFuture(deviceList));
-      }, throwable -> {
+        handler.handle(Future.succeededFuture(mobileDeviceList));
+      })
+      .onFailure(throwable -> {
         logger.error(throwable.getMessage(), throwable);
         handler.handle(Future.failedFuture(throwable));
       });
@@ -88,12 +87,12 @@ public class MysqlServiceImpl implements MysqlService {
     String sql = "insert into device(sn) values (#{sn})";
     SqlTemplate.forUpdate(pool, sql)
       .execute(Collections.singletonMap("sn", sn))
-      .subscribe()
-      .with(rowSet -> {
+      .onSuccess(rowSet -> {
         long lastInsertId = rowSet.property(MySQLClient.LAST_INSERTED_ID);
         logger.info("lastInsertId: {}, {} row(s) updated!", lastInsertId, rowSet.rowCount());
         handler.handle(Future.succeededFuture(new Device(lastInsertId, sn)));
-      }, throwable -> {
+      })
+      .onFailure(throwable -> {
         logger.error(throwable.getMessage(), throwable);
         handler.handle(Future.failedFuture(throwable));
       });
@@ -108,11 +107,11 @@ public class MysqlServiceImpl implements MysqlService {
     paramMap.put("sn", sn);
     SqlTemplate.forUpdate(pool, sql)
       .execute(paramMap)
-      .subscribe()
-      .with(rowSet -> {
+      .onSuccess(rowSet -> {
         logger.info("{} row(s) updated!", rowSet.rowCount());
         handler.handle(Future.succeededFuture());
-      }, throwable -> {
+      })
+      .onFailure(throwable -> {
         logger.error(throwable.getMessage(), throwable);
         handler.handle(Future.failedFuture(throwable));
       });
@@ -125,23 +124,14 @@ public class MysqlServiceImpl implements MysqlService {
     Map<String, Object> paramMap = new HashMap<>();
     paramMap.put("id", id);
     paramMap.put("sn", sn);
-    pool.withTransaction(conn ->
-        SqlTemplate.forUpdate(conn, sql)
-          .execute(paramMap)
-      // 模拟失败，触发回滚
-      // .onItem()
-      // .failWith(a -> {
-      //   logger.info("{} row(s) updated!", a.rowCount());
-      //   return new RuntimeException("error");
-      // })
-    )
-      .subscribe()
-      .with(a -> {
-        logger.info("{} row(s) updated!", a.rowCount());
+    pool.withTransaction(conn -> SqlTemplate.forUpdate(conn, sql).execute(paramMap))
+      .onSuccess(rowSet -> {
+        logger.info("{} row(s) updated!", rowSet.rowCount());
         handler.handle(Future.succeededFuture());
-      }, t -> {
-        logger.error(t.getMessage(), t);
-        handler.handle(Future.failedFuture(t));
+      })
+      .onFailure(throwable -> {
+        logger.error(throwable.getMessage(), throwable);
+        handler.handle(Future.failedFuture(throwable));
       });
     return this;
   }
