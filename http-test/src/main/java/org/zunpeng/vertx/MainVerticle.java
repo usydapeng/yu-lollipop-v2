@@ -44,9 +44,11 @@ public class MainVerticle extends AbstractVerticle {
           })
           .onSuccess(deploymentId -> {
             logger.info("http server deployment id: {}", deploymentId);
+            startPromise.complete();
           })
           .onFailure(throwable -> {
             logger.error(throwable.getMessage(), throwable);
+            startPromise.fail(throwable);
           });
       })
       .onFailure(throwable -> {

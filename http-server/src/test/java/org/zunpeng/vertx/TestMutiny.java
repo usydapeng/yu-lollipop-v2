@@ -11,6 +11,8 @@ import io.smallrye.mutiny.subscription.UniEmitter;
 import io.smallrye.mutiny.tuples.Tuple;
 import io.smallrye.mutiny.tuples.Tuple3;
 import io.smallrye.mutiny.unchecked.Unchecked;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -29,6 +31,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 @ExtendWith(VertxExtension.class)
@@ -1552,6 +1555,41 @@ public class TestMutiny {
     logger.info("----- end");
     Thread.sleep(5000);
     testContext.completeNow();
+  }
+
+  @Test
+  public void demo40(Vertx vertx, VertxTestContext testContext) throws Exception {
+    Uni.createFrom().item("hello")
+      .onItem()
+      .transformToUni(a -> {
+        logger.info("a: {}", a);
+        return Uni.createFrom().item("inner 1");
+      })
+      .onItem()
+      .transform(a -> {
+        logger.info("aa: {}", a);
+        return "a: " + a;
+      })
+      .subscribe()
+      .with(a -> {
+        logger.info("aaa: {}", a);
+        testContext.completeNow();
+      }, t -> {
+        logger.error(t.getMessage(), t);
+        testContext.failNow(t);
+      });
+  }
+
+  @Test
+  public void demo41(Vertx vertx, VertxTestContext testContext) throws Exception {
+    asyncFunc("a", "b", (a, b) -> {
+      logger.info("a: {}, b: {}", a, b);
+      testContext.completeNow();
+    });
+  }
+
+  private void asyncFunc(String a, String b, BiConsumer<String, String> consumer) {
+    consumer.accept(a, b);
   }
 
   private class RandomDrop<T> extends AbstractMultiOperator<T, T> {

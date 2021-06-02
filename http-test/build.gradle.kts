@@ -20,7 +20,7 @@ repositories {
   mavenCentral()
 }
 
-val vertxVersion = "4.0.3"
+val vertxVersion = "4.1.0"
 val junitJupiterVersion = "5.7.0"
 val log4jVersion = "2.14.1"
 val queryDslVersion = "4.4.0"

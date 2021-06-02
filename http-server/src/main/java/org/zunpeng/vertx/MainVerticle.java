@@ -8,9 +8,12 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.mutiny.config.ConfigRetriever;
+import io.vertx.mutiny.rabbitmq.RabbitMQClient;
+import io.vertx.rabbitmq.RabbitMQOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zunpeng.vertx.service.http.HttpServerVerticle;
+import org.zunpeng.vertx.service.mq.RabbitMqInstance;
 import org.zunpeng.vertx.service.mysql.MysqlVerticle;
 import org.zunpeng.vertx.service.redis.RedisVerticle;
 
@@ -51,6 +54,22 @@ public class MainVerticle extends AbstractVerticle {
           .transformToUni(deploymentId -> {
             logger.info("http server deployment id: {}", deploymentId);
             return Uni.createFrom().item("deploy success");
+          })
+          .onItem()
+          .transformToUni(msg -> {
+            logger.info("deploy all verticle success: {}", msg);
+
+            // 监听mq队列
+            RabbitMQOptions rabbitMQOptions = new RabbitMQOptions(configJsonObject.getJsonObject("rabbitmq"));
+            RabbitMQClient rabbitMQClient = RabbitMQClient.create(vertx, rabbitMQOptions);
+            RabbitMqInstance rabbitMqInstance = new RabbitMqInstance(vertx, rabbitMQClient);
+            rabbitMqInstance.listenQueue("stream-fragment", (messageJsonObject, asyncResultHandler) -> {
+              logger.info("rabbit mq message: {}", messageJsonObject.encode());
+              vertx.setTimer(2000, timerId -> {
+                asyncResultHandler.handle(startPromise.future());
+              });
+            });
+            return Uni.createFrom().item("deploy all success and rabbitmq");
           });
       })
       .subscribe()
@@ -61,6 +80,5 @@ public class MainVerticle extends AbstractVerticle {
         logger.error(throwable.getMessage(), throwable);
         startPromise.fail(throwable);
       });
-
   }
 }
