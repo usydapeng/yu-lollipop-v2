@@ -12,6 +12,7 @@ import io.vertx.mutiny.rabbitmq.RabbitMQClient;
 import io.vertx.rabbitmq.RabbitMQOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.zunpeng.vertx.core.ScheduleInstance;
 import org.zunpeng.vertx.service.http.HttpServerVerticle;
 import org.zunpeng.vertx.service.mq.RabbitMqInstance;
 import org.zunpeng.vertx.service.mysql.MysqlVerticle;
@@ -68,6 +69,16 @@ public class MainVerticle extends AbstractVerticle {
               vertx.setTimer(2000, timerId -> {
                 asyncResultHandler.handle(startPromise.future());
               });
+            });
+
+            // 设置定时任务
+            ScheduleInstance scheduleInstance = new ScheduleInstance(vertx);
+            scheduleInstance.cron("*/1 * * * * ?", ar -> {
+              if (ar.failed()) {
+                logger.error(ar.cause().getMessage(), ar.cause());
+              } else {
+                logger.info("timerId: {}", ar.result());
+              }
             });
             return Uni.createFrom().item("deploy all success and rabbitmq");
           });
