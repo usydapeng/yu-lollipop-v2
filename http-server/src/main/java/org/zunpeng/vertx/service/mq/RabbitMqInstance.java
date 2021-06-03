@@ -32,6 +32,16 @@ public class RabbitMqInstance {
       })
       .onItem()
       .transformToUni(a -> {
+        // create queue
+        return rabbitMQClient.queueDeclare(queue, true, false, false, new JsonObject())
+          .onItem()
+          .transformToUni(declareOk -> {
+            logger.info("queue: {}, consumerCount: {}, messageCount: {}", declareOk.getQueue(), declareOk.getConsumerCount(), declareOk.getMessageCount());
+            return rabbitMQClient.queueBind(declareOk.getQueue(), "amq.direct", "");
+          });
+      })
+      .onItem()
+      .transformToUni(a -> {
         logger.info("rabbit mq client qos config success");
         QueueOptions queueOptions = new QueueOptions().setAutoAck(false).setKeepMostRecent(false);
         return rabbitMQClient.basicConsumer(queue, queueOptions);
