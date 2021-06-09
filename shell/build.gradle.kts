@@ -20,8 +20,8 @@ repositories {
   mavenCentral()
 }
 
-val vertxVersion = "4.0.3"
-val mutinyVertxVersion = "2.5.1"
+val vertxVersion = "4.1.0"
+val mutinyVertxVersion = "2.6.0"
 val junitJupiterVersion = "5.7.0"
 val log4jVersion = "2.14.1"
 
@@ -54,6 +54,8 @@ dependencies {
 
   implementation("org.apache.logging.log4j:log4j-core:$log4jVersion")
   implementation("org.apache.logging.log4j:log4j-api:$log4jVersion")
+
+  implementation("com.corundumstudio.socketio:netty-socketio:1.7.19")
 
   testImplementation("io.vertx:vertx-junit5")
   testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")

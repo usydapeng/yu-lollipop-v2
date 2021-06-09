@@ -32,11 +32,12 @@ public class RabbitMqInstance {
       })
       .onItem()
       .transformToUni(a -> {
-        // create queue
+        // declare queue
         return rabbitMQClient.queueDeclare(queue, true, false, false, new JsonObject())
           .onItem()
           .transformToUni(declareOk -> {
-            logger.info("queue: {}, consumerCount: {}, messageCount: {}", declareOk.getQueue(), declareOk.getConsumerCount(), declareOk.getMessageCount());
+            logger.info("queue: {}, consumerCount: {}, messageCount: {}",
+              declareOk.getQueue(), declareOk.getConsumerCount(), declareOk.getMessageCount());
             return rabbitMQClient.queueBind(declareOk.getQueue(), "amq.direct", "");
           });
       })
