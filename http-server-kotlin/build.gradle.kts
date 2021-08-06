@@ -61,6 +61,7 @@ dependencies {
   implementation("io.github.microutils:kotlin-logging:$kotlinLoggingVersion")
 
   implementation("com.cronutils:cron-utils:$cronUtilsVersion")
+  implementation("com.squareup.okhttp3:okhttp:4.9.1")
 
   testImplementation("io.vertx:vertx-junit5")
   testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")

@@ -22,9 +22,21 @@ services:
   rabbitmq:
     image: rabbitmq:3.8.17-rc.1-management
     ports:
-      - "15673:5672"
-      - "15672:15672"
+      - "25673:5672"
+      - "25672:15672"
     environment:
       RABBITMQ_DEFAULT_VHOST: local-lollipop
       RABBITMQ_DEFAULT_USER: rabbitmq
       RABBITMQ_DEFAULT_PASS: rabbitmqpasswd
+
+  consul:
+    image: consul:1.10.0
+    ports:
+      - "18500:8500"
+    environment:
+      CONSUL_BIND_INTERFACE: eth0
+
+  ignite:
+    image: apacheignite/ignite:2.10.0
+    ports:
+      - "11800:10800"

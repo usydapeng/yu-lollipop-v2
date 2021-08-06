@@ -1,0 +1,35 @@
+syntax = "proto3";
+package duobei;
+
+message vmresponse{
+  int32 version = 1;
+  uint64 srctime = 2;
+  int32 status = 3;
+  int32 protocolType = 4;
+  string apps = 5;
+  string streaming = 6;
+  string msg = 7;
+  string solstreaming = 8;
+  repeated string solproxy = 9;
+  uint64 serverUseTime = 10;
+  string filling = 11;
+}
+
+message rzresponse{
+  int32 version = 1;
+  uint64 srctime = 2;
+  int32 status = 3;
+  string mnaddr = 4;
+  string msg = 5;
+  string solstreaming = 6;
+  repeated string solproxy = 7;
+  uint64 serverUseTime = 8;
+  string filling = 9;
+}
+
+message vmrequest{
+  int32 version = 1;
+  uint64 sendtime = 2;
+  string roomid = 3;
+  string filling = 4;
+}

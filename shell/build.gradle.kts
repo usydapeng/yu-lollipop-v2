@@ -56,6 +56,7 @@ dependencies {
   implementation("org.apache.logging.log4j:log4j-api:$log4jVersion")
 
   implementation("com.corundumstudio.socketio:netty-socketio:1.7.19")
+  implementation("io.socket:socket.io-client:1.0.1")
 
   testImplementation("io.vertx:vertx-junit5")
   testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")

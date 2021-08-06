@@ -24,7 +24,7 @@
     <!-- additivity 意思是，调用完当前appender，是否继续调用parent logger appender，默认true-->
     <Logger name="your logger/package name" level="debug" additivity="false"/>
     <!--默认的Root Logger 级别-->
-    <Root level="INFO">
+    <Root level="DEBUG">
       <!--这里需要区分下环境（配合maven profile之类的）-->
       <!-- 开发环境使用Console Appender，生产环境使用File Appender -->
       <AppenderRef ref="Console"/>
